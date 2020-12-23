@@ -37,15 +37,17 @@ import org.spongepowered.api.event.entity.RideEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.entity.MainPlayerInventory;
+import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 
-@Module(id = "minecartexitremover", name = "MinecartExitRemover", onEnable="onInitialize", onDisable="onDisable")
+@Module(id = "minecartexitremover", name = "MinecartExitRemover", onEnable = "onInitialize", onDisable = "onDisable")
 public class ExitRemover extends SpongeMechanic implements DocumentationProvider {
 
     @Inject
     @ModuleConfiguration
     public ConfigurationNode config;
 
-    private ConfigValue<Boolean> giveItem = new ConfigValue<>("give-item", "Provide the player with the minecart item.", true);
+    private final ConfigValue<Boolean> giveItem = new ConfigValue<>("give-item", "Provide the player with the minecart item.", true);
 
     @Override
     public void onInitialize() throws CraftBookException {
@@ -57,8 +59,26 @@ public class ExitRemover extends SpongeMechanic implements DocumentationProvider
     @Listener
     public void onDismount(RideEntityEvent.Dismount event, @First Player player) {
         if (event.getTargetEntity() instanceof Minecart) {
+            Minecart minecart = (Minecart) event.getTargetEntity();
             Sponge.getScheduler().createTaskBuilder().delayTicks(2)
-                    .execute(new CartRemover(player, (Minecart) event.getTargetEntity()))
+                    .execute(() -> {
+                        if (minecart.isRemoved()) return;
+                        if (!minecart.getPassengers().isEmpty()) return;
+                        if (!giveItem.getValue() || player.gameMode().get() == GameModes.CREATIVE) {
+                            minecart.remove();
+                            return;
+                        }
+                        ItemStack stack = ItemStack.of(ItemTypes.MINECART, 1);
+
+                        if (!player.getInventory().query(
+                                QueryOperationTypes.INVENTORY_TYPE.of(MainPlayerInventory.class)
+                        ).offer(stack).getRejectedItems().isEmpty()) {
+                            Item item = (Item) player.getLocation().getExtent().createEntity(EntityTypes.ITEM, player.getLocation().getPosition().add(0, 1, 0));
+                            item.offer(Keys.REPRESENTED_ITEM, stack.createSnapshot());
+                            player.getLocation().getExtent().spawnEntity(item);
+                        }
+                        minecart.remove();
+                    })
                     .submit(CraftBookPlugin.spongeInst());
         }
     }
@@ -75,36 +95,8 @@ public class ExitRemover extends SpongeMechanic implements DocumentationProvider
 
     @Override
     public ConfigValue<?>[] getConfigurationNodes() {
-        return new ConfigValue[] {
+        return new ConfigValue[]{
                 giveItem
         };
-    }
-
-    class CartRemover implements Runnable {
-
-        Player player;
-        Minecart minecart;
-
-        CartRemover(Player player, Minecart minecart) {
-            this.player = player;
-            this.minecart = minecart;
-        }
-
-        @Override
-        public void run () {
-            if(minecart.isRemoved()) return;
-
-            if(giveItem.getValue() && player.gameMode().get() != GameModes.CREATIVE) {
-                ItemStack stack = ItemStack.of(ItemTypes.MINECART, 1);
-
-                if(!((Player) player).getInventory().offer(stack).getRejectedItems().isEmpty()) {
-                    Item item = (Item) player.getLocation().getExtent().createEntity(EntityTypes.ITEM, player.getLocation().getPosition().add(0, 1, 0));
-                    item.offer(Keys.REPRESENTED_ITEM, stack.createSnapshot());
-                    player.getLocation().getExtent().spawnEntity(item);
-                }
-            }
-
-            minecart.remove();
-        }
     }
 }
