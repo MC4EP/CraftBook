@@ -51,6 +51,7 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.util.Direction;
+import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -86,6 +87,8 @@ public class Gate extends SimpleArea implements DocumentationProvider {
     public void onPlayerInteract(InteractBlockEvent.Secondary.MainHand event, @First Humanoid human) {
         super.onPlayerInteract(event, human);
 
+        if (event.getUseBlockResult() == Tristate.FALSE)
+            return;
         if (indirectAccess.getValue()) {
             event.getTargetBlock().getLocation().ifPresent((location) -> {
                 if (BlockUtil.doesStatePassFilters(allowedBlocks.getValue(), location.getBlock())) {

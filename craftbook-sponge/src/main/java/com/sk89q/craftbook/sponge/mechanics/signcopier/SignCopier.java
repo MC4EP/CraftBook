@@ -54,6 +54,7 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.util.Tristate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -116,6 +117,8 @@ public class SignCopier extends SpongeMechanic implements DocumentationProvider 
 
     @Listener
     public void onPlayerInteract(InteractBlockEvent event, @First Player player) {
+        if (event instanceof InteractBlockEvent.Secondary && (((InteractBlockEvent.Secondary) event).getUseBlockResult() == Tristate.FALSE || ((InteractBlockEvent.Secondary) event).getUseItemResult() == Tristate.FALSE))
+            return;
         HandType hand = event instanceof InteractBlockEvent.Primary
                 ? (event instanceof InteractBlockEvent.Primary.MainHand ? HandTypes.MAIN_HAND : HandTypes.OFF_HAND)
                 : (event instanceof InteractBlockEvent.Secondary.MainHand ? HandTypes.MAIN_HAND : HandTypes.OFF_HAND);

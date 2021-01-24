@@ -51,6 +51,7 @@ import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TranslatableText;
 import org.spongepowered.api.text.translation.ResourceBundleTranslation;
+import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.LocatableBlock;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -87,6 +88,8 @@ public abstract class SimpleArea extends SpongeSignMechanic {
 
     @Listener
     public void onPlayerInteract(InteractBlockEvent.Secondary.MainHand event, @First Humanoid human) {
+        if (event.getUseBlockResult() == Tristate.FALSE)
+            return;
         event.getTargetBlock().getLocation().ifPresent(location -> {
             if (isValid(location)) {
                 location.getTileEntity().ifPresent((sign -> {

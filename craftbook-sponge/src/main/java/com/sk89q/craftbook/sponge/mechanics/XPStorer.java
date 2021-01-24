@@ -58,6 +58,7 @@ import org.spongepowered.api.service.permission.PermissionDescription;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.Direction;
+import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -143,6 +144,8 @@ public class XPStorer extends SpongeSignMechanic implements DocumentationProvide
 
     @Listener
     public void onPlayerInteract(InteractBlockEvent.Secondary.MainHand event, @First Player player) {
+        if (event.getUseBlockResult() == Tristate.FALSE)
+            return;
         event.getTargetBlock().getLocation().filter(this::isValid).ifPresent(location -> {
             if (!sneakState.getValue().doesPass(player.get(Keys.IS_SNEAKING).orElse(false))
                     || player.get(Keys.EXPERIENCE_LEVEL).orElse(0) < 1

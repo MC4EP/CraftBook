@@ -46,6 +46,7 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.RelativePositions;
+import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -90,6 +91,8 @@ public class Elevator extends SpongeSignMechanic implements DocumentationProvide
 
     @Listener
     public void onPlayerInteract(InteractBlockEvent.Secondary.MainHand event, @First Player player) {
+        if (event.getUseBlockResult() == Tristate.FALSE)
+            return;
         event.getTargetBlock().getLocation().ifPresent((location) -> {
             Location<World> signLocation = location;
 
