@@ -40,7 +40,7 @@ defaultTasks 'licenseFormat', 'build'
 
 allprojects {
     group = 'com.sk89q.craftbook'
-    version = '4.0-SNAPSHOT'
+    version = '4.0-Alpha2-mc4ep-2'
 }
 
 // Deployment Section
