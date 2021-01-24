@@ -107,9 +107,9 @@ public class Elevator extends SpongeSignMechanic implements DocumentationProvide
 
                 Optional<Vector3d> interactionPoint = event.getInteractionPoint();
 
-                boolean down = "[Lift Down]".equals(SignUtil.getTextRaw(sign, 1)) || ("[Lift UpDown]".equals(SignUtil.getTextRaw(sign, 1)) && interactionPoint.isPresent() && interactionPoint.get().getY() < 0.5);
+                boolean down = "[Lift Down]".equals(SignUtil.getTextRaw(sign, 1)) || ("[Lift UpDown]".equals(SignUtil.getTextRaw(sign, 1)) && interactionPoint.isPresent() && (interactionPoint.get().getY() % 1.0) < 0.5);
 
-                if (down || "[Lift Up]".equals(SignUtil.getTextRaw(sign, 1)) || ("[Lift UpDown]".equals(SignUtil.getTextRaw(sign, 1)) && interactionPoint.isPresent() && interactionPoint.get().getY() > 0.5)) {
+                if (down || "[Lift Up]".equals(SignUtil.getTextRaw(sign, 1)) || ("[Lift UpDown]".equals(SignUtil.getTextRaw(sign, 1)) && interactionPoint.isPresent() && (interactionPoint.get().getY() % 1.0) > 0.5)) {
                     if (!usePermissions.hasPermission(player)) {
                         player.sendMessage(Text.of(TextColors.RED, "You don't have permission to use this mechanic!"));
                         return;
@@ -129,6 +129,9 @@ public class Elevator extends SpongeSignMechanic implements DocumentationProvide
         if(!LocationUtil.isLocationWithinWorld(event.getToTransform().getLocation()))
             return;
 
+        if(event instanceof MoveEntityEvent.Teleport)
+            return;
+
         Location<World> groundLocation = event.getToTransform().getLocation().getRelative(Direction.DOWN);
 
         //Look for dat sign
@@ -142,10 +145,14 @@ public class Elevator extends SpongeSignMechanic implements DocumentationProvide
                     }
                 }
 
-                if (event.getToTransform().getPosition().getY() > event.getFromTransform().getPosition().getY()) {
+                if (event.getTargetEntity().getOrElse(Keys.IS_FLYING, false))
+                    break;
+                if (event.getToTransform().getPosition().getY() - event.getFromTransform().getPosition().getY() > 0.01) {
                     transportEntity(event.getTargetEntity(), location, Direction.UP); //Jump is up
-                } else if (event.getTargetEntity().get(Keys.IS_SNEAKING).orElse(false)) {
+                    event.getTargetEntity().setVelocity(new Vector3d()); //stop the jump
+                } else if (event.getTargetEntity().getOrElse(Keys.IS_SNEAKING, false)) {
                     transportEntity(event.getTargetEntity(), location, Direction.DOWN); //Sneak is down
+                    event.getTargetEntity().offer(Keys.IS_SNEAKING, false); // don't fall through the entire height
                 }
 
                 break;
